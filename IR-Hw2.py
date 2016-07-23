@@ -2,6 +2,8 @@ import os
 import operator
 import numpy as np
 from math import log
+from scipy import spatial
+
 doc_path = 'SPLIT_DOC_WDID_NEW/'
 qry_path = 'QUERY_WDID_NEW/'
 
@@ -53,7 +55,11 @@ print 'FINISH COMPUTING TF OF DOCUMENT MATRIX'
 # Compute IDF
 idf = []
 for row in A:
-    idf.append(log(num_docs / sum(row)))
+    sum = 0
+    for element in row:
+        if element > 0:
+            sum += 1
+    idf.append(log(num_docs / sum))
 print 'FINISH COMPUTING IDF'
 
 # Compute TFIDF of document matrix
@@ -66,7 +72,7 @@ else:
             if A[i][j] == 0.0:
                 A[i][j] = 0.0 * idf[i]
             else:
-                A[i][j] = float( 1+log(A[i][j])) * idf[i]
+                A[i][j] = float( 1+log(A[i][j]))  * idf[i]
     A.dump("doc_matrix.dat")
     print 'FINISH COMPUTING TFIDF OF DOCUMENT MATRIX'
     
@@ -121,7 +127,8 @@ for i in range(len(querys)):
     output += ("Query "+str(i+1)+' '+querynames[i]+' '+str(len(documents))+'\n')
     sim = {}
     for j in range(len(documents)):
-        sim[j] = np.dot(A[j],q[i]) / (np.linalg.norm(A[j]) * np.linalg.norm(q[i]))
+        #sim[j] = np.dot(A[j],q[i]) / (np.linalg.norm(A[j]) * np.linalg.norm(q[i]))
+        sim[j] = 1 - spatial.distance.cosine(A[j], q[i])
     sim_sort = sorted(sim.items(),key = operator.itemgetter(1),reverse = True)
     for sim in sim_sort:
         output += (filenames[sim[0]]+' '+str(sim[1].item())+'\n')
